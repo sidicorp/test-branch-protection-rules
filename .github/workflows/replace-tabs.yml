@@ -1,5 +1,10 @@
 name: "Replace tabs"
-on: push
+on:
+  push:
+    branches:
+      - protected2
+      - master
+
 jobs:
   update-files:
     runs-on: ubuntu-latest
