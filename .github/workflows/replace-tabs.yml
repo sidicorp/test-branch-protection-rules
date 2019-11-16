@@ -1,0 +1,42 @@
+#					
+name: "Replace tabs"
+on: push
+jobs:
+  update-files:
+    runs-on: ubuntu-latest
+    steps:
+    - name: "Check out the repo"
+      # Note: You need to target `@v1.1.0`. If you target `@v1` you'll need to add a step to run `git remote set-url origin https://x-access-token:${{github.token}}@github.com/${{github.repository}}.git`
+      # TODO: Replace this with `@v2` when it is released to get non-breaking improvements.
+      uses: actions/checkout@v1.1.0
+      
+    - name: "Work around detached head (https://github.com/actions/checkout/issues/6)"
+      run: |
+        # You can use GITHUB_HEAD_REF for `on: pull_request`. Doesn't work for forked PRs though.
+        git checkout ${GITHUB_REF#refs/heads/}
+              
+    - name: "Configure git"
+      run: |
+        # Tell git who we are.
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@users.noreply.github.com"
+      
+    - name: "Replace tabs in text files with spaces"
+      run: |
+        # Make whatever changes you'd like here. Remove trailing whitespace, add copyright notices, generate docs, etc...
+        # `git grep` is used here to find non-binary files.
+        git grep --name-only -e . | xargs perl -pi -e 's/\t/  /g'
+
+    - name: "Any changes made?"
+      id: dirty-check
+      run: |
+        # Set `git-status` so we can skip the step below if the workspace is clean.
+        git status
+        echo ::set-output name=git-status::`git status --porcelain`
+        
+    - name: "Add, commit and push changes"
+      if: steps.dirty-check.outputs.git-status != ''
+      run: |
+        git add .
+        git commit -m "Richard was wrong. #TeamWinnie"
+        git push
